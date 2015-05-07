@@ -121,11 +121,11 @@ nginx::resource::upstream { 'puppetmaster_rack_app':
 }
 nginx::resource::vhost { 'puppet':
   ensure               => present,
-  server_name          => ["${::hostname}"],
+  server_name          => ["${::fqdn}"],
   listen_port          => 8140,
   ssl                  => true,
-  ssl_cert             => "/var/lib/puppet/ssl/certs/${hostname}.pem",
-  ssl_key              => "/var/lib/puppet/ssl/private_keys/${hostname}.pem",
+  ssl_cert             => "/var/lib/puppet/ssl/certs/${fqdn}.pem",
+  ssl_key              => "/var/lib/puppet/ssl/private_keys/${fqdn}.pem",
   ssl_port             => 8140,
   ssl_ciphers          => 'ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:-LOW:-SSLv2:-EXP',
   ssl_session_timeout  => '5m',
