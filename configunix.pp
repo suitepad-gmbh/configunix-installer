@@ -269,7 +269,7 @@ file { '/usr/share/puppet/rack/configunix-api/config/database.yml':
   ensure  => 'present',
   group   => 'puppet',
   owner   => 'puppet',
-  require => Rvm_gemset['ruby-2.1.5@configunix-api'],
+  require => Vcsrepo["/usr/share/puppet/rack/configunix-api"],
   content => "
 production:
   adapter: postgresql
