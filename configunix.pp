@@ -282,6 +282,20 @@ production:
 "
 }
 
+# Create application.yml
+file { '/usr/share/puppet/rack/configunix-api/config/application.yml':
+  ensure  => 'present',
+  group   => 'puppet',
+  owner   => 'puppet',
+  require => Vcsrepo["/usr/share/puppet/rack/configunix-api"],
+  content => "
+production:
+  aws_access_key_id: ''
+  aws_secret_access_key: ''
+  region: ''
+"
+}
+
 # Create postgres database
 class { 'postgresql::server': }
 class { 'postgresql::server::contrib': }
