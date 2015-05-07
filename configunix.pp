@@ -76,7 +76,6 @@ file { '/usr/share/puppet/rack/puppetmasterd/config.ru':
 }
 file { '/usr/share/puppet/rack/puppetmasterd/puma.rb':
   ensure  => 'present',
-  # source  => 'puppet:///files/puma-config.rb',
   group   => 'puppet',
   owner   => 'puppet',
   require => File['/usr/share/puppet/rack/puppetmasterd'],
@@ -108,6 +107,80 @@ bind 'unix:///var/run/puppet/puppetmaster_puma.sock'
 workers 2
 preload_app!
 "
+}
+file { '/etc/init/puppetmaster.conf':
+  ensure  => 'present',
+  group   => 'root',
+  owner   => 'root',
+  content => '# /etc/init/puppetmaster.conf - Puppetmaster Puma config
+
+description "Puppet Master Puma Service"
+
+start on (local-filesystems and net-device-up IFACE=lo and runlevel [2345])
+stop on (runlevel [!2345])
+
+respawn
+respawn limit 3 30
+
+script
+# this script runs in /bin/sh by default
+# respawn as bash so we can source in rbenv/rvm
+# quoted heredoc to tell /bin/sh not to interpret
+# variables
+exec /bin/bash <<EOT
+  # set HOME to the setuid users home, there doesnt seem to be a better, portable way
+  export HOME="$(eval echo ~$(id -un))"
+
+  if [ -d "$HOME/.rbenv/bin" ]; then
+    export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
+  elif [ -f  /etc/profile.d/rvm.sh ]; then
+    source /etc/profile.d/rvm.sh
+  elif [ -f /usr/local/rvm/scripts/rvm ]; then
+    source /etc/profile.d/rvm.sh
+  elif [ -f "$HOME/.rvm/scripts/rvm" ]; then
+    source "$HOME/.rvm/scripts/rvm"
+  elif [ -f /usr/local/share/chruby/chruby.sh ]; then
+    source /usr/local/share/chruby/chruby.sh
+    if [ -f /usr/local/share/chruby/auto.sh ]; then
+      source /usr/local/share/chruby/auto.sh
+    fi
+    # if you arent using auto, set your version here
+    # chruby 2.0.0
+  fi
+
+  logger -t puma "Starting Puppet Master server"
+
+  exec puma -C /usr/share/puppet/rack/puppetmasterd/puma.rb
+EOT
+end script
+
+pre-stop script
+exec /bin/bash <<EOT
+  # set HOME to the setuid users home, there doesnt seem to be a better, portable way
+  export HOME="$(eval echo ~$(id -un))"
+
+  if [ -d "$HOME/.rbenv/bin" ]; then
+    export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
+  elif [ -f  /etc/profile.d/rvm.sh ]; then
+    source /etc/profile.d/rvm.sh
+  elif [ -f /usr/local/rvm/scripts/rvm ]; then
+    source /etc/profile.d/rvm.sh
+  elif [ -f "$HOME/.rvm/scripts/rvm" ]; then
+    source "$HOME/.rvm/scripts/rvm"
+  elif [ -f /usr/local/share/chruby/chruby.sh ]; then
+    source /usr/local/share/chruby/chruby.sh
+    if [ -f /usr/local/share/chruby/auto.sh ]; then
+      source /usr/local/share/chruby/auto.sh
+    fi
+    # if you arent using auto, set your version here
+    # chruby 2.0.0
+  fi
+
+  logger -t puma "Stopping Puppet Master server"
+
+  exec pumactl --pidfile /var/run/puppet/puppetmaster_puma.pid stop
+EOT
+end script'
 }
 
 # Nginx
