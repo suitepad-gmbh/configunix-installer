@@ -40,6 +40,7 @@ rvm_gem { 'ruby-2.1.5@global/puppet':
 # Puppet Agent
 class { 'puppet::agent':
   enable => false,
+  ensure => 'stopped',
   master => 'localhost'
 }
 
