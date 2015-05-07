@@ -46,7 +46,9 @@ accordingly.
   puppet module install maestrodev-rvm --version 1.11.0 --modulepath ./modules
   puppet module install jfryman-nginx --version 0.2.6 --modulepath ./modules
   puppet module install zooz-puppet --version 0.0.1 --modulepath ./modules
-   ```
+  puppet module install puppetlabs-vcsrepo --version 1.2.0 --modulepath ./modules
+  puppet module install puppetlabs-postgresql --version 4.3.0 --modulepath ./modules
+  ```
 
 5. Install Configunix
 
