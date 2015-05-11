@@ -8,11 +8,11 @@ rvm_system_ruby { 'ruby-2.1.5':
   ensure      => 'present',
   default_use => true
 }
-rvm_gemset { 'ruby-2.1.5@configunix':
+rvm_gemset { 'ruby-2.1.5@configunix-api':
   ensure  => present,
   require => Rvm_system_ruby['ruby-2.1.5']
 }
-rvm_gemset { 'ruby-2.1.5@configunix-api':
+rvm_gemset { 'ruby-2.1.5@configunix-frontend':
   ensure  => present,
   require => Rvm_system_ruby['ruby-2.1.5']
 }
@@ -26,11 +26,24 @@ rvm_gem { 'ruby-2.1.5@global/puma':
 }
 rvm_gem { 'ruby-2.1.5@configunix-api/puma':
   ensure  => '2.11.2',
-  require => Rvm_system_ruby['ruby-2.1.5']
+  require => [
+    Rvm_gemset['ruby-2.1.5@configunix-api'],
+    Rvm_system_ruby['ruby-2.1.5']
+  ]
 }
 rvm_gem { 'ruby-2.1.5@configunix-api/bundler':
   ensure  => '1.9.6',
-  require => Rvm_system_ruby['ruby-2.1.5']
+  require => [
+    Rvm_gemset['ruby-2.1.5@configunix-api'],
+    Rvm_system_ruby['ruby-2.1.5']
+  ]
+}
+rvm_gem { 'ruby-2.1.5@configunix-frontend/bundler':
+  ensure  => '1.9.6',
+  require => [
+    Rvm_gemset['ruby-2.1.5@configunix-frontend'],
+    Rvm_system_ruby['ruby-2.1.5'],
+  ]
 }
 rvm_gem { 'ruby-2.1.5@global/puppet':
   ensure  => '3.7.5',
@@ -236,13 +249,15 @@ nginx::resource::vhost { 'puppet':
 }
 
 # Checkout configunix API
+package { 'git': }
 vcsrepo { "/usr/share/puppet/rack/configunix-api":
   ensure    => latest,
   provider  => git,
   source    => 'https://github.com/suitepad-gmbh/configunix-api.git',
   revision  => 'master',
   user      => 'puppet',
-  group     => 'puppet'
+  group     => 'puppet',
+  require   => Package['git']
 }
 
 # Install required gems
@@ -310,17 +325,16 @@ package { 'libpq-dev':
 # Run migrations
 exec { 'configunix-api-db-migrate':
   environment  => 'RAILS_ENV=production',
-  command      => 'rake db:migrate',
+  command      => 'bundle exec rake db:migrate',
   cwd          => '/usr/share/puppet/rack/configunix-api',
-  #refreshonly => true,
-  subscribe    => Vcsrepo["/usr/share/puppet/rack/configunix-api"],
   user         => 'puppet',
   group        => 'puppet',
   provider     => 'shell',
   require      => [
     Exec['configunix-api-bundle-install'],
     File['/usr/share/puppet/rack/configunix-api/config/database.yml'],
-    Postgresql::Server::Db['configunix']
+    Postgresql::Server::Db['configunix'],
+    Vcsrepo["/usr/share/puppet/rack/configunix-api"]
   ]
 }
 
@@ -456,7 +470,7 @@ nginx::resource::vhost { 'configunix':
   use_default_location => true,
   access_log           => '/var/log/nginx/configunix_access.log',
   error_log            => '/var/log/nginx/configunix_error.log',
-  www_root             => '/var/www' # TBD
+  www_root             => '/usr/share/puppet/static/configunix-frontend/dist'
 }
 nginx::resource::location { 'configunix-api':
   ensure           => present,
@@ -470,5 +484,125 @@ nginx::resource::location { 'configunix-api':
     'X-Client-Verify $ssl_client_verify',
     'X-Client-DN $ssl_client_s_dn',
     'X-SSL-Issuer $ssl_client_i_dn'
+  ]
+}
+# nginx::resource::location { 'configunix-frontend':
+#   ensure           => present,
+#   vhost            => 'configunix',
+#   location         => '/',
+#   www_root         =>
+#   proxy_set_header => [
+#     'Host $host',
+#     'X-Real-IP $remote_addr',
+#     'X-Forwarded-For $proxy_add_x_forwarded_for',
+#     'X-Client-Verify $ssl_client_verify',
+#     'X-Client-DN $ssl_client_s_dn',
+#     'X-SSL-Issuer $ssl_client_i_dn'
+#   ]
+# }
+
+# Frontend
+include nodejs
+package { 'nodejs-legacy': }
+package { 'npm': }
+package { 'ember-cli':
+  ensure   => '0.2.3',
+  provider => 'npm',
+  require  => Package['npm']
+}
+package { 'bower':
+  ensure   => '1.4.1',
+  provider => 'npm',
+  require  => Package['npm']
+}
+file { '/usr/share/puppet/static':
+  ensure  => 'directory',
+  group   => 'puppet',
+  owner   => 'puppet'
+}
+file { '/usr/share/puppet':
+  ensure  => 'directory',
+  group   => 'puppet',
+  owner   => 'puppet'
+}
+vcsrepo { "/usr/share/puppet/static/configunix-frontend":
+  ensure    => latest,
+  provider  => git,
+  source    => 'https://github.com/suitepad-gmbh/configunix-frontend.git',
+  revision  => 'master',
+  user      => 'puppet',
+  group     => 'puppet',
+  require   => [
+    Package['git'],
+    File['/usr/share/puppet/static']
+  ]
+}
+file { '/usr/share/puppet/static/configunix-frontend/config/environment.js':
+  ensure  => 'present',
+  source  => '/usr/share/puppet/static/configunix-frontend/config/environment.sample.js',
+  owner   => 'puppet',
+  group   => 'puppet',
+  require => Vcsrepo["/usr/share/puppet/static/configunix-frontend"]
+}
+exec { 'configunix-frontend-npm-install':
+  command  => 'npm install',
+  cwd      => '/usr/share/puppet/static/configunix-frontend',
+  user     => 'puppet',
+  group    => 'puppet',
+  provider => 'shell',
+  timeout  => 1200,
+  require   => [
+    Vcsrepo["/usr/share/puppet/static/configunix-frontend"],
+    Class['nodejs'],
+    Package['npm']
+  ]
+}
+exec { 'configunix-frontend-bower-install':
+  environment => 'HOME=/usr/share/puppet',
+  command     => 'bower install',
+  cwd         => '/usr/share/puppet/static/configunix-frontend',
+  user        => 'puppet',
+  group       => 'puppet',
+  provider    => 'shell',
+  timeout     => 600,
+  require     => [
+    Vcsrepo["/usr/share/puppet/static/configunix-frontend"],
+    Exec['configunix-frontend-npm-install'],
+    Package['bower'],
+    Class['nodejs'],
+    File['/usr/share/puppet']
+  ]
+}
+exec { 'configunix-frontend-bundle-install':
+  command  => 'bundle install --deployment',
+  cwd      => '/usr/share/puppet/static/configunix-frontend',
+  user     => 'puppet',
+  group    => 'puppet',
+  provider => 'shell',
+  timeout  => 600,
+  require   => [
+    Rvm_gemset['ruby-2.1.5@configunix-frontend'],
+    Rvm_gem['ruby-2.1.5@configunix-frontend/bundler'],
+    Vcsrepo["/usr/share/puppet/static/configunix-frontend"]
+  ]
+}
+
+exec { 'configunix-frontend-build':
+  environment => 'HOME=/usr/share/puppet',
+  command     => 'bundle exec ember build -prod',
+  cwd         => '/usr/share/puppet/static/configunix-frontend',
+  user        => 'puppet',
+  group       => 'puppet',
+  provider    => 'shell',
+  timeout     => 600,
+  require     => [
+    Vcsrepo["/usr/share/puppet/static/configunix-frontend"],
+    Exec['configunix-frontend-npm-install'],
+    Package['bower'],
+    Class['nodejs'],
+    Package['nodejs-legacy'],
+    File['/usr/share/puppet'],
+    Exec['configunix-frontend-bundle-install'],
+    File['/usr/share/puppet/static/configunix-frontend/config/environment.js']
   ]
 }

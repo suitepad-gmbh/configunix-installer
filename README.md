@@ -48,6 +48,7 @@ accordingly.
   puppet module install zooz-puppet --version 0.0.1 --modulepath ./modules
   puppet module install puppetlabs-vcsrepo --version 1.2.0 --modulepath ./modules
   puppet module install puppetlabs-postgresql --version 4.3.0 --modulepath ./modules
+  puppet module install puppetlabs-nodejs --version 0.7.1 --modulepath ./modules
   ```
 
 5. Install Configunix
