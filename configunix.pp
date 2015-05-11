@@ -303,6 +303,7 @@ file { '/usr/share/puppet/rack/configunix-api/config/application.yml':
   group   => 'puppet',
   owner   => 'puppet',
   require => Vcsrepo["/usr/share/puppet/rack/configunix-api"],
+  replace => false,
   content => "
 production:
   aws_access_key_id: ''
@@ -542,6 +543,7 @@ file { '/usr/share/puppet/static/configunix-frontend/config/environment.js':
   source  => '/usr/share/puppet/static/configunix-frontend/config/environment.sample.js',
   owner   => 'puppet',
   group   => 'puppet',
+  replace => false,
   require => Vcsrepo["/usr/share/puppet/static/configunix-frontend"]
 }
 exec { 'configunix-frontend-npm-install':
