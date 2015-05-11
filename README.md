@@ -35,7 +35,7 @@ accordingly.
   ```shell
   sudo -i
   cd ~
-  git clone git@...
+  git clone https://github.com/suitepad-gmbh/configunix-installer.git
   ```
 
 4. Install Puppet modules
