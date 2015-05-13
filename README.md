@@ -8,10 +8,12 @@ accordingly.
 1. Set up hostname on your new Puppet Master and restart machine.
 
   ```shell
+  sudo -i
   HOSTNAME=puppet.example.com
-  sudo hostname $HOSTNAME
-  sudo echo $HOSTNAME > /etc/hostname
-  sudo init 6
+  hostname $HOSTNAME
+  echo $HOSTNAME > /etc/hostname
+  echo "127.0.1.1 $HOSTNAME" >> /etc/hosts
+  init 6
   ```
 
 2. Install current Puppet version
@@ -22,7 +24,7 @@ accordingly.
   dpkg -i puppetlabs-release-trusty.deb
   echo "
   # /etc/apt/preferences.d/00-puppet.pref
-  Package: puppet puppet-common
+  Package: puppet puppet-common puppetmaster puppetmaster-common
   Pin: version 3.7*
   Pin-Priority: 501
   " >> /etc/apt/preferences.d/00-puppet.pref
@@ -43,9 +45,8 @@ accordingly.
   ```shell
   cd ~/configunix-installer
   puppet module install puppetlabs-ntp --version 3.3.0 --modulepath ./modules
-  puppet module install maestrodev-rvm --version 1.11.0 --modulepath ./modules
   puppet module install jfryman-nginx --version 0.2.6 --modulepath ./modules
-  puppet module install zooz-puppet --version 0.0.1 --modulepath ./modules
+  puppet module install DracoBlue-rvm --version 0.3.0 --modulepath ./modules
   puppet module install puppetlabs-vcsrepo --version 1.2.0 --modulepath ./modules
   puppet module install puppetlabs-postgresql --version 4.3.0 --modulepath ./modules
   puppet module install puppetlabs-nodejs --version 0.7.1 --modulepath ./modules
@@ -56,5 +57,6 @@ accordingly.
   ```shell
   sudo -i
   cd ~/configunix-installer
-  puppet apply configunix.pp --modulepath ./modules
+  puppet apply install_puppetmaster.pp --modulepath ./modules
+  puppet apply install_configunix.pp --modulepath ./modules
   ```
