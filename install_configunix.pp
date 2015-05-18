@@ -21,6 +21,12 @@ file { "configunix key store":
   mode    => '0750'
 }
 
+# Make sure puppet user is in configunix group
+user { 'puppet':
+  groups  => ['configunix'],
+  require => User['configunix']
+}
+
 # Install RVM for Configunix
 rvm::ruby { 'configunix':
   user    => 'configunix',
@@ -30,6 +36,10 @@ rvm::ruby { 'configunix':
 rvm::gem { 'bundler':
   ruby   => Rvm::Ruby['configunix'],
   ensure => '1.9.6'
+}
+rvm::gem { 'librarian-puppet':
+  ruby   => Rvm::Ruby['configunix'],
+  ensure => '2.1.0'
 }
 
 # We need Git and Postgres libs
