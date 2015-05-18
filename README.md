@@ -58,7 +58,7 @@ accordingly.
   sudo -i
   cd ~/configunix-installer
   puppet apply install_puppetmaster.pp --modulepath ./modules
-  puppet apply install_configunix.pp --modulepath ./modules
+  puppet apply install_configunix.pp --modulepath ./modules --parser current
   ```
 
 6. Write your manifests
