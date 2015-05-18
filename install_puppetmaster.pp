@@ -13,19 +13,55 @@ file { '/etc/puppet/puppet.conf':
   owner   => 'root',
   group   => 'root',
   mode    => '0644',
+  require => File[
+    '/etc/puppet/environments/production',
+    '/usr/local/bin/puppet_node_classifier',
+    '/etc/sudoers.d/90-puppet-configunix-bridge'
+  ],
   content => "[main]
-logdir=/var/log/puppet
-vardir=/var/lib/puppet
-ssldir=/var/lib/puppet/ssl
-rundir=/var/run/puppet
-factpath=$vardir/lib/facter
+  logdir = /var/log/puppet
+  vardir = /var/lib/puppet
+  ssldir = /var/lib/puppet/ssl
+  rundir = /var/run/puppet
+  factpath = \$vardir/lib/facter
 
-certname = $hostname
-dns_alt_names = $hostname,$fqdn
+  certname = $hostname
+  dns_alt_names = $hostname,$fqdn
+
+  parser = future
 
 [master]
-autosign = true"
+  autosign = true
+  environmentpath = \$confdir/environments
+  node_terminus = exec
+  external_nodes = /usr/bin/sudo /usr/local/bin/puppet_node_classifier
+"
   }
+
+file { '/etc/puppet/environments/production':
+  ensure  => 'directory',
+  owner   => 'root',
+  group   => 'configunix',
+  mode    => '0664'
+}
+
+file { '/usr/local/bin/puppet_node_classifier':
+  ensure  => 'present',
+  owner   => 'root',
+  group   => 'root',
+  mode    => '0755',
+  content => '#!/usr/bin/env bash
+
+su configunix -c "cd ~/api; RAILS_ENV=production ~/.rvm/bin/rvm 2.2.2 do bundle exec ./bin/enc $1"
+'
+}
+
+file { '/etc/sudoers.d/90-puppet-configunix-bridge':
+  ensure  => 'present',
+  owner   => 'root',
+  group   => 'root',
+  content => "puppet ALL=(root) NOPASSWD:/usr/local/bin/puppet_node_classifier\n"
+}
 
 file_line { '/etc/default/puppetmaster':
   ensure => present,
@@ -49,7 +85,7 @@ package { 'puma':
   require   => Package['ruby-dev', 'build-essential', 'libssl-dev']
 }
 
-# Create directories for Puppet Master
+# Create directories for Puppet Master Rack
 file { '/usr/share/puppet/rack':
   ensure  => 'directory',
   group   => 'puppet',

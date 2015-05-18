@@ -60,3 +60,9 @@ accordingly.
   puppet apply install_puppetmaster.pp --modulepath ./modules
   puppet apply install_configunix.pp --modulepath ./modules
   ```
+
+6. Write your manifests
+
+Manifests are to be placed in `/etc/puppet/environments` in a sub folder matching
+your environment name. At least you should a `production` in there, because
+this is the default for Puppet agents.
