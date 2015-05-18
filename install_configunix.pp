@@ -114,6 +114,7 @@ production:
   aws_access_key_id: ''
   aws_secret_access_key: ''
   region: ''
+  puppet_repository_path: '/etc/puppet/environments/production'
 "
 }
 
