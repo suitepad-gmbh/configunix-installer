@@ -57,7 +57,16 @@ accordingly.
   ```shell
   sudo -i
   cd ~/configunix-installer
-  puppet apply install_puppetmaster.pp --modulepath ./modules
+  puppet apply install_puppetmaster_unicorn.pp --modulepath ./modules
+  puppet apply install_configunix.pp --modulepath ./modules --parser current
+  ```
+
+  Alternatively, you can install the Puppetmaster running behind Puma:
+
+  ```shell
+  sudo -i
+  cd ~/configunix-installer
+  puppet apply install_puppetmaster_puma.pp --modulepath ./modules
   puppet apply install_configunix.pp --modulepath ./modules --parser current
   ```
 
