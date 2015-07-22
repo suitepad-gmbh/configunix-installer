@@ -152,7 +152,7 @@ GC.respond_to?(:copy_on_write_friendly=) and
   GC.copy_on_write_friendly = true
 
 # Force the bundler gemfile environment variable to
-# reference the Сapistrano "current" symlink
+# reference the Сapistrano 'current' symlink
 before_exec do |_|
   ENV['BUNDLE_GEMFILE'] = File.join(root, 'Gemfile')
 end
