@@ -109,6 +109,12 @@ file { '/usr/share/puppet/rack/puppetmasterd/tmp':
   owner   => 'puppet',
   require => File['/usr/share/puppet/rack/puppetmasterd']
 }
+file { '/usr/share/puppet/rack/puppetmasterd/log':
+  ensure  => 'directory',
+  group   => 'puppet',
+  owner   => 'puppet',
+  require => File['/usr/share/puppet/rack/puppetmasterd']
+}
 file { '/usr/share/puppet/rack/puppetmasterd/config.ru':
   ensure  => 'present',
   source  => '/usr/share/puppet/ext/rack/config.ru',
