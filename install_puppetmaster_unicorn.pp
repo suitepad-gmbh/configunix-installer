@@ -133,8 +133,8 @@ working_directory root
 pid '/var/run/puppet/puppetmaster_unicorn.pid'
 
 # Define Log paths
-stderr_path '#{root}/log/unicorn.log'
-stdout_path '#{root}/log/unicorn.log'
+stderr_path \"#{root}/log/unicorn.log\"
+stdout_path \"#{root}/log/unicorn.log\"
 
 # Listen on a UNIX data socket
 listen '/var/run/puppet/puppetmaster_unicorn.sock'
