@@ -243,3 +243,19 @@ nginx::resource::vhost { 'puppet':
     'X-SSL-Issuer $ssl_client_i_dn'
   ]
 }
+
+# Cron jobs
+#
+# /etc/cron.daily/cleanup-puppet-reports
+
+file { '/etc/cron.daily/cleanup-puppet-reports':
+  ensure  => 'present',
+  owner   => 'root',
+  group   => 'root',
+  mode    => '0755',
+  content => '#!/bin/bash
+
+# Cleanup puppet reports that was last modified 24 hours ago
+find /var/lib/puppet/reports/ -mtime +1 -type f -delete > /dev/null 2>&1
+'
+}
